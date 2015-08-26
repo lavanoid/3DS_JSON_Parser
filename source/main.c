@@ -5,7 +5,7 @@
 #include <3ds.h>
 #include "jsmn.h"
 #define BUF_SIZE 1024
-
+    
 char JSON_FILE[] = "jsbr-ford-mustang.json";
 
 static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
@@ -34,16 +34,16 @@ const char * parse_json(char* value) {
         printf("Object expected\n");
         return 1;
     }
-	printf("Debug START\n");
+    printf("Debug START\n");
     for (i = 1; i < r; i++) {
         if (jsoneq(file_buffer, &t[i], value) == 0) {
-			printf("Debug 1\n");
+            printf("Debug 1\n");
             break;
         }
-		printf("Debug 2\n");
+        printf("Debug 2\n");
     }
-	printf("Debug 3\n");
-	return printf("%.*s\n", t[i+1].end-t[i+1].start, file_buffer + t[i+1].start);
+    printf("Debug 3\n");
+    return printf("%.*s\n", t[i+1].end-t[i+1].start, file_buffer + t[i+1].start);
 }
 
 int main() {
