@@ -17,8 +17,7 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
 }
 
 const char * parse_json(char* value) {
-    u8* file_buffer;
-    FILE *file = fopen(JSON_FILE,"rb"); if (file == NULL) printf("Error.\n");
+    u8* file_buffer; FILE *file = fopen(JSON_FILE,"rb"); if (file == NULL) printf("Error.\n");
     fseek(file,0,SEEK_END); off_t size = ftell(file); fseek(file,0,SEEK_SET); file_buffer=malloc(size);
     if(!file_buffer) printf("Error.\n");
     off_t bytesRead = fread(file_buffer,1,size,file); fclose(file);
@@ -35,21 +34,25 @@ const char * parse_json(char* value) {
         printf("Object expected\n");
         return 1;
     }
+	printf("Debug START\n");
     for (i = 1; i < r; i++) {
         if (jsoneq(file_buffer, &t[i], value) == 0) {
-            return printf("- Value: %.*s\n", t[i+1].end-t[i+1].start, file_buffer + t[i+1].start);
-            i++;
+			printf("Debug 1\n");
+            break;
         }
+		printf("Debug 2\n");
     }
+	printf("Debug 3\n");
+	return printf("%.*s\n", t[i+1].end-t[i+1].start, file_buffer + t[i+1].start);
 }
 
 int main() {
     gfxInitDefault();
     consoleInit(GFX_TOP,NULL);
     printf("P1\n");
-    printf("%s",parse_json("description"));
+    printf("Description: %s",parse_json("description"));
     printf("P2\n");
-    printf("%s",parse_json("synchronization_spacing_us"));
+    printf("Sync spacing: %s",parse_json("synchronization_spacing_us"));
     while (aptMainLoop()) {
         hidScanInput(); u32 kDown = hidKeysDown();
         if(kDown & KEY_START) {
