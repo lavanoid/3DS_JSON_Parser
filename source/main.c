@@ -17,44 +17,79 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
 }
 
 const char * parse_json(char* value) {
-    u8* file_buffer; FILE *file = fopen(JSON_FILE,"rb"); if (file == NULL) printf("Error.\n");
-    fseek(file,0,SEEK_END); off_t size = ftell(file); fseek(file,0,SEEK_SET); file_buffer=malloc(size);
-    if(!file_buffer) printf("Error.\n");
-    off_t bytesRead = fread(file_buffer,1,size,file); fclose(file);
-    if(size!=bytesRead) printf("Error.\n");
-    int i; int r;
-    jsmn_parser p; jsmntok_t t[128]; jsmn_init(&p);
+    
+    static char *jsonValue;
+    
+    if(jsonValue != NULL) {
+        free(jsonValue);
+        jsonValue = NULL;
+    }
+    
+    u8* file_buffer;
+    FILE *file = fopen(JSON_FILE,"rb");
+    
+    if (file == NULL) {
+        printf("Error.\n");
+        return;
+    }
+    
+    fseek(file,0,SEEK_END);
+    off_t size = ftell(file);
+    fseek(file,0,SEEK_SET);
+    file_buffer=malloc(size);
+    
+    if(!file_buffer) {
+        printf("Error.\n");
+        return;
+    }
+    
+    off_t bytesRead = fread(file_buffer,1,size,file);
+    fclose(file);
+    
+    if(size!=bytesRead) {
+        printf("Error.\n");
+        return;
+    }
+    int i;
+    int r;
+    jsmn_parser p;
+    jsmntok_t t[128];
+    jsmn_init(&p);
     r = jsmn_parse(&p, file_buffer, size, t, sizeof(t)/sizeof(t[0]));
     
     if (r < 0) {
         printf("Failed to parse JSON: %d\n", r);
-        return 1;
+        return;
     }
+    
     if (r < 1 || t[0].type != JSMN_OBJECT) {
         printf("Object expected\n");
-        return 1;
+        return;
     }
-    printf("Debug START\n");
+    
     for (i = 1; i < r; i++) {
         if (jsoneq(file_buffer, &t[i], value) == 0) {
-            printf("Debug 1\n");
-            break;
+            jsonValue = (char *)malloc(t[i+1].end-t[i+1].start+1);
+            sprintf(jsonValue,"%s", file_buffer + t[i+1].start);
         }
-        printf("Debug 2\n");
     }
-    printf("Debug 3\n");
-    return printf("%.*s\n", t[i+1].end-t[i+1].start, file_buffer + t[i+1].start);
+    
+    if(jsonValue != NULL) {
+        return (const char *)jsonValue;
+    } else {
+        return "malloc error!";
+    }
+    //return printf("%.*s\n", t[i+1].end-t[i+1].start, file_buffer + t[i+1].start);
 }
 
 int main() {
     gfxInitDefault();
     consoleInit(GFX_TOP,NULL);
-    printf("P1\n");
-    printf("Description: %s",parse_json("description"));
-    printf("P2\n");
-    printf("Sync spacing: %s",parse_json("synchronization_spacing_us"));
+    printf("Description: %.*s",parse_json("description"));
+
     while (aptMainLoop()) {
-        hidScanInput(); u32 kDown = hidKeysDown();
+        hidScanInput();
+        u32 kDown = hidKeysDown();
         if(kDown & KEY_START) {
             consoleClear();
             break;
