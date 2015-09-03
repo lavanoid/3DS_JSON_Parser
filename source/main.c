@@ -68,7 +68,7 @@ const char* parse_json(char* value) {
 int main() {
     gfxInitDefault();
     consoleInit(GFX_TOP,NULL);
-    printf("Description: %s",parse_json("description"));
+    printf("Freq: %s",parse_json("frequency"));
 
     while (aptMainLoop()) {
         hidScanInput();
