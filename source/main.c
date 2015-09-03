@@ -17,8 +17,7 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
 }
 
 const char* parse_json(char* value) {
-    
-    
+
     u8* file_buffer; // Cast?
     FILE *file = fopen(JSON_FILE,"rb"); // Open the file.
     fseek(file,0,SEEK_END); // Get the file size.
@@ -57,9 +56,12 @@ const char* parse_json(char* value) {
     for (i = 1; i < r; i++) { // Cycle through tokens until needed value is found.
         if (jsoneq(file_buffer, &t[i], value) == 0) {
             tempString = (char *)malloc(t[i+1].end-t[i+1].start+1);
-            sprintf(tempString,"%s", file_buffer + t[i+1].start);
-            return (const char *)tempString;
-            break;
+            if(tempString != NULL) {
+                sprintf(tempString,"%s", file_buffer + t[i+1].start);
+                return (const char *)tempString;
+            } else {
+                return "malloc error!";
+            }
         }
     }
     
@@ -68,8 +70,8 @@ const char* parse_json(char* value) {
 int main() {
     gfxInitDefault();
     consoleInit(GFX_TOP,NULL);
-    printf("Freq: %s",parse_json("frequency"));
-
+    printf("Freq: %s\n",parse_json("frequency"));
+    printf("Done\n");
     while (aptMainLoop()) {
         hidScanInput();
         u32 kDown = hidKeysDown();
