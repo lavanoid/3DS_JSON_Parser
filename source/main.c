@@ -16,76 +16,59 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
     return -1;
 }
 
-const char * parse_json(char* value) {
+const char* parse_json(char* value) {
     
-    static char *jsonValue;
     
-    if(jsonValue != NULL) {
-        free(jsonValue);
-        jsonValue = NULL;
-    }
-    
-    u8* file_buffer;
-    FILE *file = fopen(JSON_FILE,"rb");
-    
-    if (file == NULL) {
-        printf("Error.\n");
-        return;
-    }
-    
-    fseek(file,0,SEEK_END);
+    u8* file_buffer; // Cast?
+    FILE *file = fopen(JSON_FILE,"rb"); // Open the file.
+    fseek(file,0,SEEK_END); // Get the file size.
     off_t size = ftell(file);
     fseek(file,0,SEEK_SET);
     file_buffer=malloc(size);
     
-    if(!file_buffer) {
-        printf("Error.\n");
-        return;
+    if(!file_buffer) { // Check if the file was copied into the buffer.
+        printf("Could not buffer the file.\n");
+        return "Error.";
     }
     
     off_t bytesRead = fread(file_buffer,1,size,file);
     fclose(file);
     
     if(size!=bytesRead) {
-        printf("Error.\n");
-        return;
+        printf("Could not read the file.\n"); // Check if the size is correct.
+        return "Error.";
     }
+    
     int i;
     int r;
-    jsmn_parser p;
-    jsmntok_t t[128];
-    jsmn_init(&p);
+    jsmn_parser p; // Start new JSON thingy.
+    jsmntok_t t[128]; // We don't expect any more than 128 tokens.
+    jsmn_init(&p); // Initialise json tokeniser.
     r = jsmn_parse(&p, file_buffer, size, t, sizeof(t)/sizeof(t[0]));
     
     if (r < 0) {
-        printf("Failed to parse JSON: %d\n", r);
-        return;
+        return "Failed to parse json.";
     }
     
     if (r < 1 || t[0].type != JSMN_OBJECT) {
-        printf("Object expected\n");
-        return;
+        return "Object expected.";
     }
-    
-    for (i = 1; i < r; i++) {
+    static char *tempString;
+    for (i = 1; i < r; i++) { // Cycle through tokens until needed value is found.
         if (jsoneq(file_buffer, &t[i], value) == 0) {
-            jsonValue = (char *)malloc(t[i+1].end-t[i+1].start+1);
-            sprintf(jsonValue,"%s", file_buffer + t[i+1].start);
+            tempString = (char *)malloc(t[i+1].end-t[i+1].start+1);
+            sprintf(tempString,"%s", file_buffer + t[i+1].start);
+            return (const char *)tempString;
+            break;
         }
     }
     
-    if(jsonValue != NULL) {
-        return (const char *)jsonValue;
-    } else {
-        return "malloc error!";
-    }
-    //return printf("%.*s\n", t[i+1].end-t[i+1].start, file_buffer + t[i+1].start);
 }
 
 int main() {
     gfxInitDefault();
     consoleInit(GFX_TOP,NULL);
-    printf("Description: %.*s",parse_json("description"));
+    printf("Description: %s",parse_json("description"));
 
     while (aptMainLoop()) {
         hidScanInput();
